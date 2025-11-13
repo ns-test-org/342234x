@@ -89,7 +89,7 @@ export default function CalendarApp() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-4 flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-blue-800 p-4 flex items-center justify-center">
       <motion.div 
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -243,4 +243,5 @@ export default function CalendarApp() {
     </div>
   );
 }
+
 
