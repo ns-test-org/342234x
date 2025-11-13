@@ -1,84 +1,246 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronLeft, ChevronRight, Calendar, Clock } from 'lucide-react';
 
-const slogans = [
-  "Turn chats into apps",
-  "Prompt. Ship. Repeat.",
-  "Build anything from a chat",
-  "Ideas → Apps, instantly",
-  "From zero to MVP in minutes",
-  "Your cofounder in the command line",
-  "Draft, iterate, deploy",
-  "Ship faster than you can type",
-  "Design in text, deliver in code",
-  "Dream it. Prompt it. Run it.",
-  "Chat-native app building",
-  "From prompt to product",
-  "One prompt, infinite apps",
-  "Stop scaffolding. Start shipping.",
-  "Prototype at the speed of thought",
-  "Make conversations executable"
+const months = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
-export default function Landing() {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isVisible, setIsVisible] = useState(true);
+const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setIsVisible(false);
-      setTimeout(() => {
-        setCurrentIndex((prev) => (prev + 1) % slogans.length);
-        setIsVisible(true);
-      }, 400);
-    }, 2800);
+export default function CalendarApp() {
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [direction, setDirection] = useState(0);
 
-    return () => clearInterval(interval);
-  }, []);
+  const today = new Date();
+  const currentMonth = currentDate.getMonth();
+  const currentYear = currentDate.getFullYear();
+
+  // Get first day of month and number of days
+  const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+  const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
+  const firstDayWeekday = firstDayOfMonth.getDay();
+  const daysInMonth = lastDayOfMonth.getDate();
+
+  // Generate calendar days
+  const calendarDays = [];
+  
+  // Previous month's trailing days
+  const prevMonth = new Date(currentYear, currentMonth - 1, 0);
+  for (let i = firstDayWeekday - 1; i >= 0; i--) {
+    calendarDays.push({
+      day: prevMonth.getDate() - i,
+      isCurrentMonth: false,
+      date: new Date(currentYear, currentMonth - 1, prevMonth.getDate() - i)
+    });
+  }
+
+  // Current month days
+  for (let day = 1; day <= daysInMonth; day++) {
+    calendarDays.push({
+      day,
+      isCurrentMonth: true,
+      date: new Date(currentYear, currentMonth, day)
+    });
+  }
+
+  // Next month's leading days
+  const remainingCells = 42 - calendarDays.length;
+  for (let day = 1; day <= remainingCells; day++) {
+    calendarDays.push({
+      day,
+      isCurrentMonth: false,
+      date: new Date(currentYear, currentMonth + 1, day)
+    });
+  }
+
+  const navigateMonth = (direction: number) => {
+    setDirection(direction);
+    setCurrentDate(new Date(currentYear, currentMonth + direction, 1));
+  };
+
+  const isToday = (date: Date) => {
+    return date.toDateString() === today.toDateString();
+  };
+
+  const isSelected = (date: Date) => {
+    return selectedDate && date.toDateString() === selectedDate.toDateString();
+  };
+
+  const slideVariants = {
+    enter: (direction: number) => ({
+      x: direction > 0 ? 300 : -300,
+      opacity: 0
+    }),
+    center: {
+      zIndex: 1,
+      x: 0,
+      opacity: 1
+    },
+    exit: (direction: number) => ({
+      zIndex: 0,
+      x: direction < 0 ? 300 : -300,
+      opacity: 0
+    })
+  };
 
   return (
-    <div className="relative h-[100dvh] w-full overflow-hidden bg-black text-white">
-      {/* Enhanced animated aurora background layers */}
-      <div className="absolute inset-0 bg-aurora-layer-1" />
-      <div className="absolute inset-0 bg-aurora-layer-2" />
-      <div className="absolute inset-0 bg-aurora-layer-3" />
-      
-      {/* Floating particles overlay */}
-      <div className="absolute inset-0 bg-particles" />
-      
-      {/* Main content - centered */}
-      <main className="relative z-10 h-full flex flex-col items-center justify-center px-6">
-        <h1 className="text-center text-[clamp(28px,6vw,64px)] font-medium tracking-tight mb-4">
-          Turn Chats into Apps
-        </h1>
-        
-        {/* Rotating slogans */}
-        <div className="mt-4 h-8 md:h-10 overflow-hidden flex items-center justify-center">
-          <span
-            className={`inline-block text-center text-[clamp(18px,3vw,32px)] font-light transition-all duration-[400ms] ease-in-out ${
-              isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'
-            }`}
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-4 flex items-center justify-center">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+        className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border border-white/20 max-w-md w-full"
+      >
+        {/* Header */}
+        <motion.div 
+          className="flex items-center justify-between mb-8"
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2 }}
+        >
+          <div className="flex items-center gap-3">
+            <Calendar className="w-8 h-8 text-white" />
+            <h1 className="text-2xl font-bold text-white">Calendar</h1>
+          </div>
+          <div className="flex items-center gap-2 text-white/80">
+            <Clock className="w-5 h-5" />
+            <span className="text-sm">
+              {today.toLocaleDateString('en-US', { 
+                weekday: 'short', 
+                month: 'short', 
+                day: 'numeric' 
+              })}
+            </span>
+          </div>
+        </motion.div>
+
+        {/* Month Navigation */}
+        <div className="flex items-center justify-between mb-6">
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => navigateMonth(-1)}
+            className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
           >
-            {slogans[currentIndex]}
-          </span>
-        </div>
-      </main>
-      
-      {/* Start Prompting arrow pointing left - bottom left */}
-      <div className="absolute left-6 md:left-8 bottom-[5%] z-20 flex items-center gap-3 arrow-point-left">
-        <div className="flex items-center gap-2 text-white/80 font-medium text-sm md:text-base">
-          <svg 
-            className="w-5 h-5 md:w-6 md:h-6 animate-bounce-horizontal" 
-            fill="none" 
-            viewBox="0 0 24 24" 
-            stroke="currentColor"
+            <ChevronLeft className="w-6 h-6 text-white" />
+          </motion.button>
+
+          <AnimatePresence mode="wait" custom={direction}>
+            <motion.h2
+              key={`${currentMonth}-${currentYear}`}
+              custom={direction}
+              variants={slideVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{
+                x: { type: "spring", stiffness: 300, damping: 30 },
+                opacity: { duration: 0.2 }
+              }}
+              className="text-xl font-semibold text-white"
+            >
+              {months[currentMonth]} {currentYear}
+            </motion.h2>
+          </AnimatePresence>
+
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => navigateMonth(1)}
+            className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          <span>Start prompting</span>
+            <ChevronRight className="w-6 h-6 text-white" />
+          </motion.button>
         </div>
-      </div>
+
+        {/* Weekday Headers */}
+        <div className="grid grid-cols-7 gap-1 mb-2">
+          {weekdays.map((day) => (
+            <motion.div
+              key={day}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="text-center text-white/60 text-sm font-medium py-2"
+            >
+              {day}
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Calendar Grid */}
+        <AnimatePresence mode="wait" custom={direction}>
+          <motion.div
+            key={`${currentMonth}-${currentYear}-grid`}
+            custom={direction}
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{
+              x: { type: "spring", stiffness: 300, damping: 30 },
+              opacity: { duration: 0.2 }
+            }}
+            className="grid grid-cols-7 gap-1"
+          >
+            {calendarDays.map((dayObj, index) => (
+              <motion.button
+                key={`${dayObj.date.toISOString()}-${index}`}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: index * 0.01 }}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setSelectedDate(dayObj.date)}
+                className={`
+                  aspect-square flex items-center justify-center text-sm font-medium rounded-lg transition-all duration-200
+                  ${dayObj.isCurrentMonth 
+                    ? 'text-white hover:bg-white/20' 
+                    : 'text-white/30 hover:bg-white/10'
+                  }
+                  ${isToday(dayObj.date) 
+                    ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg' 
+                    : ''
+                  }
+                  ${isSelected(dayObj.date) 
+                    ? 'bg-white/30 ring-2 ring-white/50' 
+                    : ''
+                  }
+                `}
+              >
+                {dayObj.day}
+              </motion.button>
+            ))}
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Selected Date Display */}
+        <AnimatePresence>
+          {selectedDate && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="mt-6 p-4 bg-white/10 rounded-xl border border-white/20"
+            >
+              <p className="text-white text-center">
+                Selected: {selectedDate.toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
     </div>
   );
 }
+
